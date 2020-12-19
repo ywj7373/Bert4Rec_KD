@@ -3,8 +3,6 @@ def set_template(args):
         return
 
     elif args.template.startswith('train_bert'):
-        args.mode = 'train'
-
         args.dataset_code = 'ml-1m'
         args.min_rating = 0
         args.min_uc = 5

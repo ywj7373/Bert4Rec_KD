@@ -16,8 +16,14 @@ def train():
     save_test_result(export_root, test_result)  # Save result
 
 
+def distill():
+    pass
+
+
 if __name__ == '__main__':
     if args.mode == 'train':
         train()
+    elif args.mode == 'distill':
+        distill()
     else:
         raise ValueError('Invalid mode')
