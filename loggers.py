@@ -17,7 +17,7 @@ class LoggerService(object):
         for logger in self.train_loggers:
             logger.complete(**log_data)
         for logger in self.val_loggers:
-            logger.complete(**log_data)
+            logger.complete(**log_data) # Save best and recent checkpoints
 
     def log_train(self, log_data):
         for logger in self.train_loggers:

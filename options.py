@@ -6,7 +6,6 @@ from trainers import TRAINERS
 
 import argparse
 
-
 parser = argparse.ArgumentParser(description='RecPlay')
 
 ################

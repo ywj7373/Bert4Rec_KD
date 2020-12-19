@@ -10,6 +10,8 @@ class AbstractDataloader(metaclass=ABCMeta):
         seed = args.dataloader_random_seed
         self.rng = random.Random(seed)
         save_folder = dataset._get_preprocessed_folder_path()
+
+        # Get Dataset
         dataset = dataset.load_dataset()
         self.train = dataset['train']
         self.val = dataset['val']
@@ -19,6 +21,7 @@ class AbstractDataloader(metaclass=ABCMeta):
         self.user_count = len(self.umap)
         self.item_count = len(self.smap)
 
+        # Negative sampler
         code = args.train_negative_sampler_code
         train_negative_sampler = negative_sampler_factory(code, self.train, self.val, self.test,
                                                           self.user_count, self.item_count,
@@ -32,7 +35,7 @@ class AbstractDataloader(metaclass=ABCMeta):
                                                          args.test_negative_sampling_seed,
                                                          save_folder)
 
-        self.train_negative_samples = train_negative_sampler.get_negative_samples()
+        self.train_negative_samples = train_negative_sampler.get_negative_samples() # Never used
         self.test_negative_samples = test_negative_sampler.get_negative_samples()
 
     @classmethod

@@ -106,6 +106,8 @@ class AverageMeterSet(object):
             return meter
         return self.meters[key]
 
+    # Add new meter object to meters if not exist
+    # Update meter object if exist in meters
     def update(self, name, value, n=1):
         if name not in self.meters:
             self.meters[name] = AverageMeter()

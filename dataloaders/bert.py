@@ -9,18 +9,20 @@ class BertDataloader(AbstractDataloader):
         super().__init__(args, dataset)
         self.max_len = args.bert_max_len
         self.mask_prob = args.bert_mask_prob
-        self.CLOZE_MASK_TOKEN = self.item_count + 1
+        self.CLOZE_MASK_TOKEN = self.item_count + 1 # The mask is a number that doesn't exist in items
 
     @classmethod
     def code(cls):
         return 'bert'
 
+    # Return all torch dataloaders
     def get_pytorch_dataloaders(self):
         train_loader = self._get_train_loader()
         val_loader = self._get_val_loader()
         test_loader = self._get_test_loader()
         return train_loader, val_loader, test_loader
 
+    # Convert into torch train dataloader
     def _get_train_loader(self):
         dataset = self._get_train_dataset()
         dataloader = data_utils.DataLoader(dataset, batch_size=self.args.train_batch_size,
@@ -37,6 +39,7 @@ class BertDataloader(AbstractDataloader):
     def _get_test_loader(self):
         return self._get_eval_loader(mode='test')
 
+    # Convert into torch eval or test dataloader
     def _get_eval_loader(self, mode):
         batch_size = self.args.val_batch_size if mode == 'val' else self.args.test_batch_size
         dataset = self._get_eval_dataset(mode)
@@ -49,7 +52,7 @@ class BertDataloader(AbstractDataloader):
         dataset = BertEvalDataset(self.train, answers, self.max_len, self.CLOZE_MASK_TOKEN, self.test_negative_samples)
         return dataset
 
-
+# Get train dataset with mask token
 class BertTrainDataset(data_utils.Dataset):
     def __init__(self, u2seq, max_len, mask_prob, mask_token, num_items, rng):
         self.u2seq = u2seq
@@ -65,12 +68,13 @@ class BertTrainDataset(data_utils.Dataset):
 
     def __getitem__(self, index):
         user = self.users[index]
-        seq = self._getseq(user)
+        seq = self._getseq(user) # List of items for the user
 
         tokens = []
         labels = []
         for s in seq:
             prob = self.rng.random()
+            # Masked
             if prob < self.mask_prob:
                 prob /= self.mask_prob
 
@@ -82,13 +86,16 @@ class BertTrainDataset(data_utils.Dataset):
                     tokens.append(s)
 
                 labels.append(s)
+            # Not masked
             else:
                 tokens.append(s)
                 labels.append(0)
 
+        # Get certain amount from the items
         tokens = tokens[-self.max_len:]
         labels = labels[-self.max_len:]
 
+        # Fill in the missing number of items if the total number of items is smaller than max_len
         mask_len = self.max_len - len(tokens)
 
         tokens = [0] * mask_len + tokens
@@ -100,7 +107,7 @@ class BertTrainDataset(data_utils.Dataset):
         return self.u2seq[user]
 
 
-
+# Get eval or test dataset with token and negative samples
 class BertEvalDataset(data_utils.Dataset):
     def __init__(self, u2seq, u2answer, max_len, mask_token, negative_samples):
         self.u2seq = u2seq
@@ -122,6 +129,7 @@ class BertEvalDataset(data_utils.Dataset):
         candidates = answer + negs
         labels = [1] * len(answer) + [0] * len(negs)
 
+        # Add mask at the end of the training set and resize
         seq = seq + [self.mask_token]
         seq = seq[-self.max_len:]
         padding_len = self.max_len - len(seq)

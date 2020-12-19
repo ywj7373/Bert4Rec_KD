@@ -78,15 +78,15 @@ class AbstractTrainer(metaclass=ABCMeta):
 
         for batch_idx, batch in enumerate(tqdm_dataloader):
             batch_size = batch[0].size(0)
-            batch = [x.to(self.device) for x in batch]
+            batch = [x.to(self.device) for x in batch] # Move batch to gpu
 
             self.optimizer.zero_grad()
-            loss = self.calculate_loss(batch)
-            loss.backward()
+            loss = self.calculate_loss(batch) # Calculate loss
+            loss.backward() # Backward Propagation
 
-            self.optimizer.step()
+            self.optimizer.step() # Update parameters
 
-            average_meter_set.update('loss', loss.item())
+            average_meter_set.update('loss', loss.item()) # Update meter to get average
             tqdm_dataloader.set_description(
                 'Epoch {}, loss {:.3f} '.format(epoch+1, average_meter_set['loss'].avg))
 
@@ -101,7 +101,7 @@ class AbstractTrainer(metaclass=ABCMeta):
                 }
                 log_data.update(average_meter_set.averages())
                 self.log_extra_train_info(log_data)
-                self.logger_service.log_train(log_data)
+                self.logger_service.log_train(log_data) # Log training data
 
         return accum_iter
 
@@ -115,8 +115,10 @@ class AbstractTrainer(metaclass=ABCMeta):
             for batch_idx, batch in enumerate(tqdm_dataloader):
                 batch = [x.to(self.device) for x in batch]
 
+                # Validation result
                 metrics = self.calculate_metrics(batch)
 
+                # Print out the validation result
                 for k, v in metrics.items():
                     average_meter_set.update(k, v)
                 description_metrics = ['NDCG@%d' % k for k in self.metric_ks[:3]] +\
@@ -132,7 +134,37 @@ class AbstractTrainer(metaclass=ABCMeta):
                 'accum_iter': accum_iter,
             }
             log_data.update(average_meter_set.averages())
-            self.logger_service.log_val(log_data)
+            self.logger_service.log_val(log_data) # Log validation data
+            
+    def test(self):
+        print('Test best model with test set!')
+
+        best_model = torch.load(os.path.join(self.export_root, 'models', 'best_acc_model.pth')).get('model_state_dict')
+        self.model.load_state_dict(best_model)
+        self.model.eval()
+
+        average_meter_set = AverageMeterSet()
+
+        with torch.no_grad():
+            tqdm_dataloader = tqdm(self.test_loader)
+            for batch_idx, batch in enumerate(tqdm_dataloader):
+                batch = [x.to(self.device) for x in batch]
+
+                metrics = self.calculate_metrics(batch)
+
+                for k, v in metrics.items():
+                    average_meter_set.update(k, v)
+                description_metrics = ['NDCG@%d' % k for k in self.metric_ks[:3]] +\
+                                        ['Recall@%d' % k for k in self.metric_ks[:3]]
+                description = 'Val: ' + ', '.join(s + ' {:.3f}' for s in description_metrics)
+                description = description.replace('NDCG', 'N').replace('Recall', 'R')
+                description = description.format(*(average_meter_set[k].avg for k in description_metrics))
+                tqdm_dataloader.set_description(description)
+
+            average_metrics = average_meter_set.averages()
+            with open(os.path.join(self.export_root, 'logs', 'test_metrics.json'), 'w') as f:
+                json.dump(average_metrics, f, indent=4)
+            print(average_metrics)
 
     def _create_optimizer(self):
         args = self.args
@@ -159,6 +191,8 @@ class AbstractTrainer(metaclass=ABCMeta):
                 MetricGraphPrinter(writer, key='NDCG@%d' % k, graph_name='NDCG@%d' % k, group_name='Validation'))
             val_loggers.append(
                 MetricGraphPrinter(writer, key='Recall@%d' % k, graph_name='Recall@%d' % k, group_name='Validation'))
+        
+        # Save best and recent model checkpoints
         val_loggers.append(RecentModelLogger(model_checkpoint))
         val_loggers.append(BestModelLogger(model_checkpoint, metric_key=self.best_metric))
         return writer, train_loggers, val_loggers

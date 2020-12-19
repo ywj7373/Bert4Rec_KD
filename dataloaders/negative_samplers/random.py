@@ -15,8 +15,9 @@ class RandomNegativeSampler(AbstractNegativeSampler):
         np.random.seed(self.seed)
         negative_samples = {}
         print('Sampling negative items')
-        for user in trange(1, self.user_count+1):
-            if isinstance(self.train[user][1], tuple):
+        for user in trange(1, self.user_count + 1):
+            # Get all items that have been seen by the user
+            if isinstance(self.train[user][1], tuple): # If the item is a tuple
                 seen = set(x[0] for x in self.train[user])
                 seen.update(x[0] for x in self.val[user])
                 seen.update(x[0] for x in self.test[user])
@@ -28,6 +29,7 @@ class RandomNegativeSampler(AbstractNegativeSampler):
             samples = []
             for _ in range(self.sample_size):
                 item = np.random.choice(self.item_count) + 1
+                # If the item has already been seen or is in negative sample
                 while item in seen or item in samples:
                     item = np.random.choice(self.item_count) + 1
                 samples.append(item)
