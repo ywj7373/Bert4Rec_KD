@@ -166,7 +166,7 @@ class AbstractTrainer(metaclass=ABCMeta):
             average_metrics = average_meter_set.averages()
             with open(os.path.join(self.export_root, 'logs', 'test_metrics.json'), 'w') as f:
                 json.dump(average_metrics, f, indent=4)
-            print(average_metrics)
+            return average_metrics
 
     def _create_optimizer(self):
         args = self.args

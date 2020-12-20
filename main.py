@@ -17,6 +17,16 @@ def train():
 
 
 def distill():
+    # Prepare dataset
+
+    # Fetch teacher output and put it into dataset
+
+    # Set Model
+
+    # Train
+
+    # Evaluate and save test result
+
     pass
 
 

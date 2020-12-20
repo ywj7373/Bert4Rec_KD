@@ -21,7 +21,7 @@ def ndcg(scores, labels, k):
     dcg = (hits.float() * weights).sum(1)
     idcg = torch.Tensor([weights[:min(n, k)].sum() for n in labels.sum(1)])
     ndcg = dcg / idcg
-    return ndcg.mean()
+    return ndcg.mean().item()
 
 
 def recalls_and_ndcgs_for_ks(scores, labels, ks):
@@ -43,7 +43,7 @@ def recalls_and_ndcgs_for_ks(scores, labels, ks):
        weights = 1 / torch.log2(position.float())
        dcg = (hits * weights).sum(1)
        idcg = torch.Tensor([weights[:min(n, k)].sum() for n in answer_count])
-       ndcg = (dcg / idcg).mean()
+       ndcg = (dcg / idcg).mean().item()
        metrics['NDCG@%d' % k] = ndcg
 
     return metrics
