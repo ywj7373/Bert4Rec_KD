@@ -1,11 +1,11 @@
-from options import args
-from models import model_factory
-from dataloaders import dataloader_factory
-from trainers import trainer_factory
-from utils import *
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import TensorDataset, DataLoader
+
+from dataloaders import dataloader_factory
+from models import model_factory
+from options import args
+from trainers import trainer_factory
+from utils import *
 
 
 def train():
@@ -37,7 +37,7 @@ def distill():
 
     # Get Teacher Model
     teacher_model = model_factory("bert", args)
-    export_root = get_name_of_last_experiment_path(args.experiment_dir, args.experiment_description)
+    export_root = get_name_of_last_experiment_path(args, args.experiment_dir, args.experiment_description)
     best_model = torch.load(os.path.join(export_root, 'models', 'best_acc_model.pth')).get('model_state_dict')
     teacher_model.load_state_dict(best_model)
     export_root = create_experiment_distill_folder(args)
@@ -65,12 +65,15 @@ def distill():
 
         logits = logits.view(-1, logits.size(-1))  # (B*T) x V
         labels = labels.view(-1)  # B*T
+        teacher_logits = teacher_logits.view(-1, logits.size(-1))
+
         ce = nn.CrossEntropyLoss(ignore_index=0)
         loss = 0.1 * ce(logits, labels)
+
         T = 1.0
         loss += 0.9 * nn.KLDivLoss()(
-            F.log_softmax(logits/T, dim=1),
-            F.softmax(teacher_logits/T, dim=1)
+            F.log_softmax(logits / T, dim=1),
+            F.softmax(teacher_logits / T, dim=1)
         )
 
         return loss

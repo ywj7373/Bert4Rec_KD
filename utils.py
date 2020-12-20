@@ -28,7 +28,9 @@ def create_experiment_export_folder(args):
     if not os.path.exists(experiment_dir):
         os.mkdir(experiment_dir)
     experiment_path = get_name_of_experiment_path(experiment_dir, experiment_description)
-    os.mkdir(experiment_path)
+
+    if not os.path.exists(experiment_path):
+        os.mkdir(experiment_path)
     print('Folder created: ' + os.path.abspath(experiment_path))
     return experiment_path
 
@@ -38,8 +40,10 @@ def create_experiment_distill_folder(args):
     experiment_dir = args.experiment_dir
     if not os.path.exists(experiment_dir):
         os.mkdir(experiment_dir)
-    experiment_path = get_name_of_last_experiment_path(experiment_dir, experiment_description)
-    os.mkdir(experiment_path)
+    experiment_path = get_name_of_last_experiment_path(args, experiment_dir, experiment_description)
+
+    if not os.path.exists(experiment_path):
+        os.mkdir(experiment_path)
     print('Folder created: ' + os.path.abspath(experiment_path))
     return experiment_path
 
@@ -58,9 +62,11 @@ def _get_experiment_index(experiment_path):
     return idx
 
 
-def get_name_of_last_experiment_path(experiment_dir, experiment_description):
+def get_name_of_last_experiment_path(args, experiment_dir, experiment_description):
+    test_experiment_path = os.path.join(args.experiment_dir, (args.experiment_description + "_" + str(date.today())))
     experiment_path = os.path.join(experiment_dir, (experiment_description + "_" + str(date.today())))
-    idx = get_last_experiment_index(experiment_path)
+
+    idx = get_last_experiment_index(test_experiment_path)
     experiment_path = experiment_path + "_" + str(idx)
     return experiment_path
 
