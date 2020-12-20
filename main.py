@@ -5,6 +5,7 @@ from dataloaders import dataloader_factory
 from models import model_factory
 from options import args
 from trainers import trainer_factory
+from trainers.utils import extract_layers
 from utils import *
 
 
@@ -29,6 +30,7 @@ def train():
 
     test_result = trainer.test()  # Evaluation
     save_test_result(export_root, test_result)  # Save result
+    torch.save(model, export_root + "_model")
 
 
 def distill():
@@ -55,6 +57,11 @@ def distill():
 
     # Get Student Model
     model = model_factory("small bert", args)
+
+    # Load weights from teacher model
+    layers = [0, 2, 4, 6]
+    distill_sd = extract_layers(layers, best_model)
+    model.load_state_dict(distill_sd)
 
     # Train
     trainer = trainer_factory(args, teacher_logits, model, train_loader, val_loader, test_loader, export_root)
@@ -83,7 +90,7 @@ def distill():
     # Evaluate and save test result
     test_result = trainer.test()
     save_test_result(export_root, test_result)
-    torch.save(model, export_root)
+    torch.save(model, export_root + "model")
 
 
 if __name__ == '__main__':

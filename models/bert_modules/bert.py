@@ -56,7 +56,7 @@ class SMALLBERT(nn.Module):
         vocab_size = num_items + 2
 
         n_layers = args.bert_num_blocks // 2  # 2
-        heads = args.bert_num_heads // 2  # 4
+        heads = args.bert_num_heads  # 4
         hidden = args.bert_hidden_units  # 256
         feed_forward_hidden = hidden * 4  # 1024
 
@@ -68,7 +68,7 @@ class SMALLBERT(nn.Module):
 
         # multi-layers transformer blocks, deep network
         self.transformer_blocks = nn.ModuleList(
-            [TransformerBlock(hidden, heads, feed_forward_hidden * 4, dropout) for _ in range(n_layers)])
+            [TransformerBlock(hidden, heads, feed_forward_hidden, dropout) for _ in range(n_layers)])
 
     def forward(self, x):
         mask = (x > 0).unsqueeze(1).repeat(1, x.size(1), 1).unsqueeze(1)
