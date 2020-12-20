@@ -14,7 +14,7 @@ def train():
     train_loader, val_loader, test_loader = dataloader_factory(args)  # Load data
     trainer = trainer_factory(args, None, model, train_loader, val_loader, test_loader, export_root)
 
-    def calculate_loss(model, batch, teacher_logits):
+    def calculate_loss(model, batch):
         seqs, labels = batch
         logits = model(seqs)  # B x T x V
 

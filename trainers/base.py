@@ -76,7 +76,10 @@ class AbstractTrainer(metaclass=ABCMeta):
             batch = [x.to(self.device) for x in batch]  # Move batch to gpu
 
             self.optimizer.zero_grad()
-            loss = get_loss(self.model, batch, self.teacher_logits[batch_idx])  # Calculate loss
+            if self.teacher_logits is None:
+                loss = get_loss(self.model, batch)
+            else:
+                loss = get_loss(self.model, batch, self.teacher_logits[batch_idx])  # Calculate loss
             loss.backward()  # Backward Propagation
 
             self.optimizer.step()  # Update parameters
