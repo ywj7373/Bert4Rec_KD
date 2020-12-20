@@ -82,7 +82,8 @@ def distill():
 
     # Evaluate and save test result
     test_result = trainer.test()
-    save_test_result(export_root, test_result, isDistill=True)
+    save_test_result(export_root, test_result)
+    torch.save(model, export_root)
 
 
 if __name__ == '__main__':

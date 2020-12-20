@@ -84,11 +84,8 @@ def load_weights(model, path):
     pass
 
 
-def save_test_result(export_root, result, isDistill=False):
-    if isDistill:
-        filepath = Path(export_root).joinpath('distill_test_result.txt')
-    else:
-        filepath = Path(export_root).joinpath('test_result.txt')
+def save_test_result(export_root, result):
+    filepath = Path(export_root).joinpath('test_result.txt')
     with filepath.open('w') as f:
         json.dump(result, f, indent=2)
 
