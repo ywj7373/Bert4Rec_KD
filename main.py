@@ -10,7 +10,7 @@ from torch.utils.data import TensorDataset, DataLoader
 
 def train():
     export_root = setup_train(args)  # Create output directory and file
-    model = model_factory(args)  # Initialize model
+    model = model_factory("bert", args)  # Initialize model
     train_loader, val_loader, test_loader = dataloader_factory(args)  # Load data
     trainer = trainer_factory(args, model, train_loader, val_loader, test_loader, export_root)
 
