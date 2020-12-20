@@ -83,14 +83,23 @@ parser.add_argument('--bert_hidden_units', type=int, default=None, help='Size of
 parser.add_argument('--bert_num_blocks', type=int, default=None, help='Number of transformer layers')
 parser.add_argument('--bert_num_heads', type=int, default=None, help='Number of heads for multi-attention')
 parser.add_argument('--bert_dropout', type=float, default=None, help='Dropout probability to use throughout the model')
-parser.add_argument('--bert_mask_prob', type=float, default=None, help='Probability for masking items in the training sequence')
+parser.add_argument('--bert_mask_prob', type=float, default=None,
+                    help='Probability for masking items in the training sequence')
+
+###############
+# Distillation
+###############
+parser.add_argument('--distill_num_blocks', type=int, default=2, help='Number of layers in distillBert')
+parser.add_argument('--distill_layers', type=int, default=[0, 1], help='Layers to initialize weight from the teacher '
+                                                                       'model')
+parser.add_argument('--distill_alpha', type=int, default=0.1, help='alpha for distillBert')
+parser.add_argument('--distill_loss_func', type=str, default='soft', choices=['soft', 'mse'])
 
 ################
 # Experiment
 ################
 parser.add_argument('--experiment_dir', type=str, default='experiments')
 parser.add_argument('--experiment_description', type=str, default='test')
-
 
 ################
 args = parser.parse_args()

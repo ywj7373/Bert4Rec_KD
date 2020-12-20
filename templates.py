@@ -45,6 +45,11 @@ def set_template(args):
         args.bert_num_heads = 4
         args.bert_num_items = num_items
 
+        args.distill_num_blocks = 2
+        args.distill_layers = [0, 1]
+        args.distill_alpha = 0.1
+        args.distill_loss_func = 'soft'
+
 
 def get_user_item_nums(args):
     if args.dataset_code == 'ml-1m':

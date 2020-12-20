@@ -59,7 +59,8 @@ def distill():
     model = model_factory("small bert", args)
 
     # Load weights from teacher model
-    layers = [0, 2, 4, 6]
+    layers = args.distill_layers
+    assert (len(layers) == args.distill_num_blocks)
     distill_sd = extract_layers(layers, best_model)
     model.load_state_dict(distill_sd)
 
@@ -75,13 +76,16 @@ def distill():
         teacher_logits = teacher_logits.view(-1, logits.size(-1))
 
         ce = nn.CrossEntropyLoss(ignore_index=0)
-        loss = 0.1 * ce(logits, labels)
+        loss = args.distill_alpha * ce(logits, labels)
 
-        T = 1.0
-        loss += 0.9 * nn.KLDivLoss()(
-            F.log_softmax(logits / T, dim=1),
-            F.softmax(teacher_logits / T, dim=1)
-        )
+        if args.distill_loss_func == "soft":
+            T = 1.0
+            loss += (1 - args.distill_alpha) * nn.KLDivLoss()(
+                F.log_softmax(logits / T, dim=1),
+                F.softmax(teacher_logits / T, dim=1)
+            )
+        elif args.distill_loss_func == "mse":
+            loss += (1 - args.distill_alpha) * nn.MSELoss()(logits, teacher_logits)
 
         return loss
 

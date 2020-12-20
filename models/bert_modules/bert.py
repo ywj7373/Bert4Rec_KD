@@ -55,10 +55,10 @@ class SMALLBERT(nn.Module):
         num_items = args.bert_num_items
         vocab_size = num_items + 2
 
-        n_layers = args.bert_num_blocks // 2  # 2
-        heads = args.bert_num_heads  # 4
-        hidden = args.bert_hidden_units  # 256
-        feed_forward_hidden = hidden * 4  # 1024
+        n_layers = args.distill_num_blocks
+        heads = args.bert_num_heads
+        hidden = args.bert_hidden_units
+        feed_forward_hidden = hidden * 4
 
         self.hidden = hidden
         dropout = args.bert_dropout
