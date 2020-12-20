@@ -55,24 +55,24 @@ def extract_layers(layers, state_dict):
     distill_sd["bert.embedding.token.weight"] = state_dict["bert.embedding.token.weight"]
     distill_sd["bert.embedding.position.pe.weight"] = state_dict["bert.embedding.position.pe.weight"]
 
-    for layer in layers:
+    for i, layer in enumerate(layers):
         for idx in range(3):
             for wb in ["weight", "bias"]:
-                distill_sd[f"bert.transformer_blocks.{layer}.attention.linear_layers.{idx}.{wb}"] = state_dict[
+                distill_sd[f"bert.transformer_blocks.{i}.attention.linear_layers.{idx}.{wb}"] = state_dict[
                     f"bert.transformer_blocks.{layer}.attention.linear_layers.{idx}.{wb}"]
 
         for wb in ["weight", "bias"]:
-            distill_sd[f"bert.transformer_blocks.{layer}.attention.output_linear.{wb}"] = state_dict[
+            distill_sd[f"bert.transformer_blocks.{i}.attention.output_linear.{wb}"] = state_dict[
                 f"bert.transformer_blocks.{layer}.attention.output_linear.{wb}"]
-            distill_sd[f"bert.transformer_blocks.{layer}.feed_forward.w_1.{wb}"] = state_dict[
+            distill_sd[f"bert.transformer_blocks.{i}.feed_forward.w_1.{wb}"] = state_dict[
                 f"bert.transformer_blocks.{layer}.feed_forward.w_1.{wb}"]
-            distill_sd[f"bert.transformer_blocks.{layer}.feed_forward.w_2.{wb}"] = state_dict[
+            distill_sd[f"bert.transformer_blocks.{i}.feed_forward.w_2.{wb}"] = state_dict[
                 f"bert.transformer_blocks.{layer}.feed_forward.w_2.{wb}"]
 
         for ab in ["a_2", "b_2"]:
-            distill_sd[f"bert.transformer_blocks.{layer}.input_sublayer.norm.{ab}"] = state_dict[
+            distill_sd[f"bert.transformer_blocks.{i}.input_sublayer.norm.{ab}"] = state_dict[
                 f"bert.transformer_blocks.{layer}.input_sublayer.norm.{ab}"]
-            distill_sd[f"bert.transformer_blocks.{layer}.output_sublayer.norm.{ab}"] = state_dict[
+            distill_sd[f"bert.transformer_blocks.{i}.output_sublayer.norm.{ab}"] = state_dict[
                 f"bert.transformer_blocks.{layer}.output_sublayer.norm.{ab}"]
 
     distill_sd["out.weight"] = state_dict["out.weight"]
