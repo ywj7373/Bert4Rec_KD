@@ -90,7 +90,7 @@ parser.add_argument('--bert_mask_prob', type=float, default=None,
 # Distillation
 ###############
 parser.add_argument('--distill_num_blocks', type=int, default=2, help='Number of layers in distillBert')
-parser.add_argument('--distill_layers', type=int, default=[0, 1], help='Layers to initialize weight from the teacher '
+parser.add_argument('--distill_layers', type=int, default=[0, 4], help='Layers to initialize weight from the teacher '
                                                                        'model')
 parser.add_argument('--distill_alpha', type=int, default=0.1, help='alpha for distillBert')
 parser.add_argument('--distill_loss_func', type=str, default='soft', choices=['soft', 'mse'])
