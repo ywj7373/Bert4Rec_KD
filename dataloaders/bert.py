@@ -15,9 +15,6 @@ class BertDataloader(AbstractDataloader):
     def code(cls):
         return 'bert'
 
-    def get_train_dataset(self):
-        return self._get_train_dataset()
-
     # Return all torch dataloaders
     def get_pytorch_dataloaders(self):
         train_loader = self._get_train_loader()
@@ -29,7 +26,7 @@ class BertDataloader(AbstractDataloader):
     def _get_train_loader(self):
         dataset = self._get_train_dataset()
         dataloader = data_utils.DataLoader(dataset, batch_size=self.args.train_batch_size,
-                                           shuffle=False, pin_memory=True)
+                                           shuffle=False)
         return dataloader
 
     def _get_train_dataset(self):

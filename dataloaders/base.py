@@ -44,9 +44,5 @@ class AbstractDataloader(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_train_dataset(self):
-        pass
-
-    @abstractmethod
     def get_pytorch_dataloaders(self):
         pass

@@ -34,7 +34,6 @@ def set_template(args):
         args.metric_ks = [1, 5, 10, 20, 50]
         args.best_metric = 'NDCG@10'
 
-        args.model_code = 'bert'
         args.model_init_seed = 0
         num_users, num_items = get_user_item_nums(args)
 

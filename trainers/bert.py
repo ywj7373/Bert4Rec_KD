@@ -1,12 +1,10 @@
 from .base import AbstractTrainer
 from .utils import recalls_and_ndcgs_for_ks
 
-import torch.nn as nn
-
 
 class BERTTrainer(AbstractTrainer):
-    def __init__(self, args, model, train_loader, val_loader, test_loader, export_root):
-        super().__init__(args, model, train_loader, val_loader, test_loader, export_root)
+    def __init__(self, args, teacher_logits, model, train_loader, val_loader, test_loader, export_root):
+        super().__init__(args, teacher_logits, model, train_loader, val_loader, test_loader, export_root)
 
     @classmethod
     def code(cls):

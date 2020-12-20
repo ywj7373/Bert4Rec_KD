@@ -1,21 +1,17 @@
-import json
+from pathlib import Path
 
-from loggers import *
-from config import STATE_DICT_KEY, OPTIMIZER_STATE_DICT_KEY
-from utils import AverageMeterSet
-
-import torch
 import torch.nn as nn
 import torch.optim as optim
 from tensorboardX import SummaryWriter
 from tqdm import tqdm
 
-from abc import *
-from pathlib import Path
+from config import STATE_DICT_KEY, OPTIMIZER_STATE_DICT_KEY
+from loggers import *
+from utils import AverageMeterSet
 
 
 class AbstractTrainer(metaclass=ABCMeta):
-    def __init__(self, args, model, train_loader, val_loader, test_loader, export_root):
+    def __init__(self, args, teacher_logits, model, train_loader, val_loader, test_loader, export_root):
         self.args = args
         self.device = args.device
         self.model = model.to(self.device)
@@ -23,6 +19,7 @@ class AbstractTrainer(metaclass=ABCMeta):
         if self.is_parallel:
             self.model = nn.DataParallel(self.model)
 
+        self.teacher_logits = teacher_logits
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.test_loader = test_loader
@@ -76,17 +73,17 @@ class AbstractTrainer(metaclass=ABCMeta):
 
         for batch_idx, batch in enumerate(tqdm_dataloader):
             batch_size = batch[0].size(0)
-            batch = [x.to(self.device) for x in batch] # Move batch to gpu
+            batch = [x.to(self.device) for x in batch]  # Move batch to gpu
 
             self.optimizer.zero_grad()
-            loss = get_loss(self.model, batch) # Calculate loss
-            loss.backward() # Backward Propagation
+            loss = get_loss(self.model, batch, self.teacher_logits[batch_idx])  # Calculate loss
+            loss.backward()  # Backward Propagation
 
-            self.optimizer.step() # Update parameters
+            self.optimizer.step()  # Update parameters
 
-            average_meter_set.update('loss', loss.item()) # Update meter to get average
+            average_meter_set.update('loss', loss.item())  # Update meter to get average
             tqdm_dataloader.set_description(
-                'Epoch {}, loss {:.3f} '.format(epoch+1, average_meter_set['loss'].avg))
+                'Epoch {}, loss {:.3f} '.format(epoch + 1, average_meter_set['loss'].avg))
 
             accum_iter += batch_size
 
@@ -99,7 +96,7 @@ class AbstractTrainer(metaclass=ABCMeta):
                 }
                 log_data.update(average_meter_set.averages())
                 self.log_extra_train_info(log_data)
-                self.logger_service.log_train(log_data) # Log training data
+                self.logger_service.log_train(log_data)  # Log training data
 
         return accum_iter
 
@@ -119,7 +116,7 @@ class AbstractTrainer(metaclass=ABCMeta):
                 # Print out the validation result
                 for k, v in metrics.items():
                     average_meter_set.update(k, v)
-                description_metrics = ['NDCG@%d' % k for k in self.metric_ks[:3]] +\
+                description_metrics = ['NDCG@%d' % k for k in self.metric_ks[:3]] + \
                                       ['Recall@%d' % k for k in self.metric_ks[:3]]
                 description = 'Val: ' + ', '.join(s + ' {:.3f}' for s in description_metrics)
                 description = description.replace('NDCG', 'N').replace('Recall', 'R')
@@ -132,8 +129,8 @@ class AbstractTrainer(metaclass=ABCMeta):
                 'accum_iter': accum_iter,
             }
             log_data.update(average_meter_set.averages())
-            self.logger_service.log_val(log_data) # Log validation data
-            
+            self.logger_service.log_val(log_data)  # Log validation data
+
     def test(self):
         print('Test best model with test set!')
 
@@ -152,8 +149,8 @@ class AbstractTrainer(metaclass=ABCMeta):
 
                 for k, v in metrics.items():
                     average_meter_set.update(k, v)
-                description_metrics = ['NDCG@%d' % k for k in self.metric_ks[:3]] +\
-                                        ['Recall@%d' % k for k in self.metric_ks[:3]]
+                description_metrics = ['NDCG@%d' % k for k in self.metric_ks[:3]] + \
+                                      ['Recall@%d' % k for k in self.metric_ks[:3]]
                 description = 'Val: ' + ', '.join(s + ' {:.3f}' for s in description_metrics)
                 description = description.replace('NDCG', 'N').replace('Recall', 'R')
                 description = description.format(*(average_meter_set[k].avg for k in description_metrics))
@@ -167,7 +164,8 @@ class AbstractTrainer(metaclass=ABCMeta):
         if args.optimizer.lower() == 'adam':
             return optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
         elif args.optimizer.lower() == 'sgd':
-            return optim.SGD(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay, momentum=args.momentum)
+            return optim.SGD(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay,
+                             momentum=args.momentum)
         else:
             raise ValueError
 
@@ -187,7 +185,7 @@ class AbstractTrainer(metaclass=ABCMeta):
                 MetricGraphPrinter(writer, key='NDCG@%d' % k, graph_name='NDCG@%d' % k, group_name='Validation'))
             val_loggers.append(
                 MetricGraphPrinter(writer, key='Recall@%d' % k, graph_name='Recall@%d' % k, group_name='Validation'))
-        
+
         # Save best and recent model checkpoints
         val_loggers.append(RecentModelLogger(model_checkpoint))
         val_loggers.append(BestModelLogger(model_checkpoint, metric_key=self.best_metric))

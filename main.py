@@ -1,6 +1,6 @@
 from options import args
 from models import model_factory
-from dataloaders import dataloader_factory, get_train_dataset
+from dataloaders import dataloader_factory
 from trainers import trainer_factory
 from utils import *
 import torch.nn as nn
@@ -12,9 +12,9 @@ def train():
     export_root = setup_train(args)  # Create output directory and file
     model = model_factory("bert", args)  # Initialize model
     train_loader, val_loader, test_loader = dataloader_factory(args)  # Load data
-    trainer = trainer_factory(args, model, train_loader, val_loader, test_loader, export_root)
+    trainer = trainer_factory(args, None, model, train_loader, val_loader, test_loader, export_root)
 
-    def calculate_loss(model, batch):
+    def calculate_loss(model, batch, teacher_logits):
         seqs, labels = batch
         logits = model(seqs)  # B x T x V
 
@@ -40,6 +40,7 @@ def distill():
     export_root = get_name_of_last_experiment_path(args.experiment_dir, args.experiment_description)
     best_model = torch.load(os.path.join(export_root, 'models', 'best_acc_model.pth')).get('model_state_dict')
     teacher_model.load_state_dict(best_model)
+    export_root = create_experiment_distill_folder(args)
 
     # Fetch teacher output and put it into dataset
     teacher_model.eval()
@@ -52,19 +53,14 @@ def distill():
             seqs, labels = batch
             teacher_logits.append(teacher_model(seqs))
 
-    teacher_logits = torch.cat(teacher_logits)
-    train_dataset = get_train_dataset(args)
-    tensors = TensorDataset(teacher_logits, *train_dataset.get_tensors())
-    train_loader = DataLoader(tensors, batch_size=args.train_batch_size, shuffle=False, pin_memory=True)
-
     # Get Student Model
     model = model_factory("small bert", args)
 
     # Train
-    trainer = trainer_factory(args, model, train_loader, val_loader, test_loader, export_root)
+    trainer = trainer_factory(args, teacher_logits, model, train_loader, val_loader, test_loader, export_root)
 
-    def calculate_loss(model, batch):
-        teacher_logits, seqs, labels = batch
+    def calculate_loss(model, batch, teacher_logits):
+        seqs, labels = batch
         logits = model(seqs)  # B x T x V
 
         logits = logits.view(-1, logits.size(-1))  # (B*T) x V
