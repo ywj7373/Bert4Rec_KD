@@ -15,6 +15,9 @@ class BertDataloader(AbstractDataloader):
     def code(cls):
         return 'bert'
 
+    def get_train_dataset(self):
+        return self._get_train_dataset()
+
     # Return all torch dataloaders
     def get_pytorch_dataloaders(self):
         train_loader = self._get_train_loader()
@@ -26,7 +29,7 @@ class BertDataloader(AbstractDataloader):
     def _get_train_loader(self):
         dataset = self._get_train_dataset()
         dataloader = data_utils.DataLoader(dataset, batch_size=self.args.train_batch_size,
-                                           shuffle=True, pin_memory=True)
+                                           shuffle=False, pin_memory=True)
         return dataloader
 
     def _get_train_dataset(self):
@@ -51,6 +54,7 @@ class BertDataloader(AbstractDataloader):
         answers = self.val if mode == 'val' else self.test
         dataset = BertEvalDataset(self.train, answers, self.max_len, self.CLOZE_MASK_TOKEN, self.test_negative_samples)
         return dataset
+
 
 # Get train dataset with mask token
 class BertTrainDataset(data_utils.Dataset):

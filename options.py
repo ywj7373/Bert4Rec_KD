@@ -76,7 +76,6 @@ parser.add_argument('--best_metric', type=str, default='NDCG@10', help='Metric f
 ################
 # Model
 ################
-parser.add_argument('--model_code', type=str, default='bert', choices=MODELS.keys())
 parser.add_argument('--model_init_seed', type=int, default=None)
 # BERT #
 parser.add_argument('--bert_max_len', type=int, default=None, help='Length of sequence for bert')

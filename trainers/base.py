@@ -53,25 +53,21 @@ class AbstractTrainer(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def calculate_loss(self, batch):
-        pass
-
-    @abstractmethod
     def calculate_metrics(self, batch):
         pass
 
-    def train(self):
+    def train(self, get_loss):
         accum_iter = 0
         self.validate(0, accum_iter)
         for epoch in range(self.num_epochs):
-            accum_iter = self.train_one_epoch(epoch, accum_iter)
+            accum_iter = self.train_one_epoch(epoch, accum_iter, get_loss)
             self.validate(epoch, accum_iter)
         self.logger_service.complete({
             'state_dict': (self._create_state_dict()),
         })
         self.writer.close()
 
-    def train_one_epoch(self, epoch, accum_iter):
+    def train_one_epoch(self, epoch, accum_iter, get_loss):
         self.model.train()
         self.lr_scheduler.step()
 
@@ -83,7 +79,7 @@ class AbstractTrainer(metaclass=ABCMeta):
             batch = [x.to(self.device) for x in batch] # Move batch to gpu
 
             self.optimizer.zero_grad()
-            loss = self.calculate_loss(batch) # Calculate loss
+            loss = get_loss(self.model, batch) # Calculate loss
             loss.backward() # Backward Propagation
 
             self.optimizer.step() # Update parameters
@@ -164,8 +160,6 @@ class AbstractTrainer(metaclass=ABCMeta):
                 tqdm_dataloader.set_description(description)
 
             average_metrics = average_meter_set.averages()
-            with open(os.path.join(self.export_root, 'logs', 'test_metrics.json'), 'w') as f:
-                json.dump(average_metrics, f, indent=4)
             return average_metrics
 
     def _create_optimizer(self):
