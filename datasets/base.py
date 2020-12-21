@@ -11,6 +11,7 @@ import os
 import tempfile
 import shutil
 import pickle
+import gzip
 
 
 class AbstractDataset(metaclass=ABCMeta):
@@ -93,28 +94,41 @@ class AbstractDataset(metaclass=ABCMeta):
 
     def maybe_download_raw_dataset(self):
         folder_path = self._get_rawdata_folder_path()
-        
-        # Check if the dataset has already been downloaded
         if folder_path.is_dir() and\
            all(folder_path.joinpath(filename).is_file() for filename in self.all_raw_file_names()):
             print('Raw data already exists. Skip downloading')
             return
-        
-        # Download
         print("Raw file doesn't exist. Downloading...")
-        if self.is_zipfile():
-            # Create temporary zip file
+        if self.raw_filetype() == 'zip':
             tmproot = Path(tempfile.mkdtemp())
             tmpzip = tmproot.joinpath('file.zip')
             tmpfolder = tmproot.joinpath('folder')
-            # Download zip file into file.zip
             download(self.url(), tmpzip)
-            # Unzip zip file to temporary folder
             unzip(tmpzip, tmpfolder)
             if self.zip_file_content_is_folder():
                 tmpfolder = tmpfolder.joinpath(os.listdir(tmpfolder)[0])
-            # Move data foldere to path and remove temporary folder
             shutil.move(tmpfolder, folder_path)
+            shutil.rmtree(tmproot)
+            print()
+        elif self.raw_filetype() == 'gz':
+            tmproot = Path(tempfile.mkdtemp())
+            tmpgz = tmproot.joinpath('file.gz')
+            tmpfile = tmproot.joinpath('file')
+            file_path = folder_path.joinpath(self.all_raw_file_names()[0])
+            if not file_path.parent.is_dir():
+                file_path.parent.mkdir(parents=True)
+            download(self.url(), tmpgz)
+            with gzip.open(tmpgz, 'rb') as f_in:
+                with open(tmpfile, 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+            shutil.move(tmpfile, file_path)
+            shutil.rmtree(tmproot)
+        elif self.raw_filetype() == 'txt':
+            tmproot = Path(tempfile.mkdtemp())
+            tmpfile = tmproot.joinpath('file')
+            download(self.url(), tmpfile)
+            folder_path.mkdir(parents=True)
+            shutil.move(tmpfile, folder_path.joinpath('ratings.txt'))
             shutil.rmtree(tmproot)
             print()
         else:
