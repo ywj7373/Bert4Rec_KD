@@ -6,6 +6,9 @@
 3. Run `python3 main.py --template train_bert` to train the teacher model
 4. Run `python3 main.py --template train_bert --mode distill`
 
+## Result
+![img.png](img.png)
+
 - - -  
 ## Reference
 * [BERT4Rec-PyTorch](https://github.com/SungMinCho/BERT4Rec-PyTorch)
